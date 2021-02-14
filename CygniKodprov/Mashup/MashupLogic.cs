@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -19,26 +20,28 @@ namespace CygniKodprov.Mashup
 
         public async Task StartApiAsync(string MBID)
         {
-
+            ReciveModel reciveData;
             var request = new HttpRequestMessage(HttpMethod.Get,
-           "https://musicbrainz.org/ws/2/artist/" + "c2764f38-febf-4e47-a0d7-687980aabf38?inc=url-rels+release-groups");
+           "https://musicbrainz.org/ws/2/artist/" + MBID + "?inc=url-rels+release-groups");
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("User-Agent", "CodeTest");
 
             var client = _clientFactory.CreateClient();
 
-            var response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
-                var responseStream = response.Content;
-                var test = JsonSerializer.Deserialize<ReciveModel>(responseStream.ToString());
-                Console.WriteLine(test);
+                reciveData = await response.Content.ReadFromJsonAsync<ReciveModel>();
+                Console.WriteLine(reciveData);
             }
             else
             {
-               //Return error
+                //Return error
+                throw new Exception("There was an error calling the api: " + response.ReasonPhrase);
             }
+
+
         }
     }
 }
