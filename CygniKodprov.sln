@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CygniKodprovApp", "CygniKodprov\CygniKodprovApp.csproj", "{28FD6C07-E8D9-4CC8-8A7F-8E94F60551A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MashupApp", "CygniKodprov\MashupApp.csproj", "{28FD6C07-E8D9-4CC8-8A7F-8E94F60551A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
