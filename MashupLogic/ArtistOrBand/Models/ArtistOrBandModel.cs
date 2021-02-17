@@ -8,6 +8,7 @@ namespace MashupLogic.ArtistOrBand.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public List<Album> Albums { get; set; }
+        // The successCode tells us if the request was a full success(1) or a partial success(2) which happens when some of the data cannot be retrieved.
         public int SuccessCode { get; set; }
         public string ErrorNotes { get; set; }
     }
