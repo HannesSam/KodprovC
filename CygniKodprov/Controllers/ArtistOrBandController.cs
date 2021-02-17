@@ -1,10 +1,11 @@
-﻿using CygniKodprovApp.ArtistOrBand.Models;
-using CygniKodprovApp.Exceptions;
+﻿using MashupLogic.ArtistOrBand.Models;
+using MashupLogic.ArtistOrBand.Models.Interfaces;
+using MashupLogic.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 
-namespace CygniKodprovApp.Controllers
+namespace MashupAPI.Controllers
 {
     [Route("Mashup/[controller]")]
     [ApiController]
@@ -18,14 +19,14 @@ namespace CygniKodprovApp.Controllers
 
         [HttpGet]
         public async Task<ActionResult<ArtistOrBandModel>> GetAsync(string MBID)
-        {     
+        {
             // Checks that the input string is a valid Guid otherwise returns the BadRequest(500) status code.
             if (!Guid.TryParse(MBID, out _))
             {
                 return BadRequest("The input string is not a valid MBID identifier");
             }
 
-            // Creates a unique Id for this request wich can be used in logging and as a tool to avoid some api call limits. 
+            // Creates a unique Id for this request which  can be used in logging and as a tool to avoid some api call limits. 
             string requestId = Guid.NewGuid().ToString();
 
             // Runs the main logic of the request and handles exceptions.
@@ -41,7 +42,7 @@ namespace CygniKodprovApp.Controllers
             }
             catch (Exception ex)
             {
-                // Returns a 500 if and otherwise unhadnled exception is thrown.
+                // Returns a 500 if an otherwise unhandled exception is thrown.
                 return StatusCode(500, ex.Message);
             }
             return artistOrBandData;

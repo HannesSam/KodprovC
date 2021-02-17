@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CygniKodprovApp.ArtistOrBand.Models
+namespace MashupLogic.ArtistOrBand.Models
 {
     public class ArtistOrBandModel
     {

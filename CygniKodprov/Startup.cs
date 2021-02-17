@@ -1,5 +1,5 @@
-using CygniKodprovApp.ArtistOrBand;
-using CygniKodprovApp.ArtistOrBand.Models;
+using MashupLogic.ArtistOrBand;
+using MashupLogic.ArtistOrBand.Models.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-namespace CygniKodprov
+namespace MashupAPI
 {
     public class Startup
     {

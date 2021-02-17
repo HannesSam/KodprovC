@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CygniKodprovApp.Exceptions
+namespace MashupLogic.Exceptions
 {
     public class MissingSecondaryDataException : Exception
     {

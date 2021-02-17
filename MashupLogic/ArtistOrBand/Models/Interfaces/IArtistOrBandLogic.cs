@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace CygniKodprovApp.ArtistOrBand.Models
+namespace MashupLogic.ArtistOrBand.Models.Interfaces
 {
     public interface IArtistOrBandLogic
     {

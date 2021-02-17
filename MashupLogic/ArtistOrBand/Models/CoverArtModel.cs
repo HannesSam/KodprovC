@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CygniKodprovApp.ArtistOrBand.Models
+namespace MashupLogic.ArtistOrBand.Models
 {
     public class CoverArtModel
     {

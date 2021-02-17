@@ -1,5 +1,6 @@
-﻿using CygniKodprovApp.ArtistOrBand.Models;
-using CygniKodprovApp.Exceptions;
+﻿using MashupLogic.ArtistOrBand.Models;
+using MashupLogic.ArtistOrBand.Models.Interfaces;
+using MashupLogic.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -7,7 +8,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace CygniKodprovApp.ArtistOrBand
+namespace MashupLogic.ArtistOrBand
 {
     // This class contains methods for querying the different apis.
     public class CallsToServices : ICallsToServices
@@ -21,8 +22,8 @@ namespace CygniKodprovApp.ArtistOrBand
 
         // This method gets data from the MusicBrainz api.
         // Inputs: 
-        // MBID is the identifyer used to get data from the MusicBrainz api. 
-        // requestId is an unique idntifyer for this request.
+        // MBID is the identifier used to get data from the MusicBrainz api. 
+        // requestId is an unique identifier for this request.
         // Return:
         // MusicBrainzModel that contains the data.
         public async Task<MusicBrainzModel> GetMusicBrainzDataAsync(string MBID, string requestId)
@@ -54,7 +55,6 @@ namespace CygniKodprovApp.ArtistOrBand
         // string that contains the wikipedia link.
         public async Task<List<Album>> GetAlbumDataAsync(MusicBrainzModel reciveData)
         {
-
             List<Album> albumList = new List<Album>();
 
             foreach (var release in reciveData.Releasegroups)
@@ -73,9 +73,9 @@ namespace CygniKodprovApp.ArtistOrBand
                     CoverArtModel coverArtData = await response.Content.ReadFromJsonAsync<CoverArtModel>();
                     album.ImageUrl = coverArtData.Images.First(coverArt => coverArt.Front == true).ImageUrl;
                 }
-                else if(response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-
+                    // A 404 in this case tells us no coverArt exists for this particular album but this should not throw an error since this is expected.
                 }
                 else
                 {
@@ -86,47 +86,15 @@ namespace CygniKodprovApp.ArtistOrBand
             return albumList;
         }
 
-        // This method creates a wikipedia link either directly from a connection to wikipedia or from wikiData.
+        // This method queries data from wikipedia by first getting a valid wikipediaLink and then sending a get request.
         // Inputs: 
         // musicBrainzData is the result data from the musicBrainz api and contains a link to wikiData and/or wikipedia. 
         // Return:
-        // string that contains the wikipedia link.
-        public async Task<string> GetWikpediaIdFromWikiDataAsync(string wikiDataLink)
+        // WikipediaModel that contains the wikipedia data.
+        public async Task<WikipediaModel> GetWikipediaDataAsync(MusicBrainzModel musicBrainzData)
         {
-            string wikipediaLink = "";
+            string wikipediaLink = await GetWikipediaLinkAsync(musicBrainzData);
 
-            string wikiDataId = wikiDataLink.Replace("https://www.wikidata.org/wiki/", "");
-            var request = new HttpRequestMessage(HttpMethod.Get,
-           "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + wikiDataId + "&format=json&props=sitelinks");
-
-            HttpResponseMessage response = await Client.SendAsync(request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                WikiDataModel wikiDataData = await response.Content.ReadFromJsonAsync<WikiDataModel>();
-                if (wikiDataData.Entities.ContainsKey(wikiDataId))
-                {
-                    wikipediaLink = HttpUtility.UrlEncode(wikiDataData.Entities[wikiDataId].Sitelinks.Enwiki.Title);
-                }
-                else
-                {
-                    throw new MissingSecondaryDataException("The wikiData contains no connection therefore a descritpion might not be availible. Reason: " + response.ReasonPhrase);
-                }
-            }
-            else
-            {
-                throw new MissingSecondaryDataException("The wikiData api call failed therfore a description might not be availible. Reason: " + response.ReasonPhrase);
-            }
-            return wikipediaLink;
-        }
-
-        // This method creates a wikipedia link either directly from a connection to wikipedia or from wikiData.
-        // Inputs: 
-        // musicBrainzData is the result data from the musicBrainz api and contains a link to wikiData and/or wikipedia. 
-        // Return:
-        // string that contains the wikipedia link.
-        public async Task<WikipediaModel> GetWikipediaDataAsync(string wikipediaLink)
-        {
             WikipediaModel wikipediaData;
 
             string wikipediaBandName = wikipediaLink.Replace("https://en.wikipedia.org/wiki/", "");
@@ -141,9 +109,67 @@ namespace CygniKodprovApp.ArtistOrBand
             }
             else
             {
-                throw new MissingSecondaryDataException("The Wikipeida api call failed therfore a description might not be availible. Reason: " + response.ReasonPhrase);
+                throw new MissingSecondaryDataException("The Wikipedia api call failed therefore a description might not be available. Reason: " + response.ReasonPhrase);
             }
             return wikipediaData;
+        }
+
+        // This method creates a wikipedia link either directly from a connection to wikipedia or from wikiData.
+        // Inputs: 
+        // musicBrainzData is the result data from the musicBrainz api and contains a link to wikiData and/or wikipedia. 
+        // Return:
+        // string that contains the wikipedia link.
+        private async Task<string> GetWikipediaLinkAsync(MusicBrainzModel musicBrainzData)
+        {
+            string wikipediaLink;
+            var wikpediaRelation = musicBrainzData.Relations.FirstOrDefault(musicBrainz => musicBrainz.Type == "wikipedia");
+            if (wikpediaRelation != null)
+            {
+                // If a direct link exists the wikipediaLink is set to the correct url.
+                wikipediaLink = wikpediaRelation.Url.Resource;
+            }
+            else
+            {
+                // If a direct link does not exist the wikipediaLink is set through the Wikidata link.
+                var testtest = musicBrainzData.Relations.FirstOrDefault(musicBrainz => musicBrainz.Type == "wikidata");
+                wikipediaLink = await GetWikpediaIdFromWikiDataAsync(testtest.Url.Resource);
+            }
+            return wikipediaLink;
+        }
+
+        // This method creates a wikipedia link from wikiData
+        // Inputs: 
+        // wikiDataLink is the identifier needed to access the WikiData api for the correct band/artist. 
+        // Return:
+        // string that contains the wikipedia link.
+        private async Task<string> GetWikpediaIdFromWikiDataAsync(string wikiDataLink)
+        {
+            string wikipediaLink = "";
+
+            string wikiDataId = wikiDataLink.Replace("https://www.wikidata.org/wiki/", "");
+            var request = new HttpRequestMessage(HttpMethod.Get,
+           "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + wikiDataId + "&format=json&props=sitelinks");
+
+            HttpResponseMessage response = await Client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                WikiDataModel wikiDataData = await response.Content.ReadFromJsonAsync<WikiDataModel>();
+                // Check if we received a link to the respective english wikipedia site.
+                if (wikiDataData.Entities.ContainsKey(wikiDataId))
+                {
+                    wikipediaLink = HttpUtility.UrlEncode(wikiDataData.Entities[wikiDataId].Sitelinks.Enwiki.Title);
+                }
+                else
+                {
+                    throw new MissingSecondaryDataException("The wikiData contains no connection to wikipedia therefore a description might not be available. Reason: " + response.ReasonPhrase);
+                }
+            }
+            else
+            {
+                throw new MissingSecondaryDataException("The wikiData api call failed therefore a description might not be available. Reason: " + response.ReasonPhrase);
+            }
+            return wikipediaLink;
         }
     }
 }
