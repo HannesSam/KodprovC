@@ -57,17 +57,24 @@ namespace MashupLogic.ArtistOrBand
         {
             List<Album> albumList = new List<Album>();
 
-            foreach (var release in reciveData.Releasegroups)
+            List<Task<HttpResponseMessage>> responses = new List<Task<HttpResponseMessage>>();
+
+            foreach (var item in reciveData.Releasegroups)
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get,
+               "http://coverartarchive.org" + "/release-group/" + item.Id);
+
+
+                responses.Add(Client.SendAsync(request));
+            }
+
+            var results = await Task.WhenAll(responses);
+
+            foreach (var response in results)
             {
                 Album album = new Album();
-                album.Id = release.Id;
-                album.Title = release.Title;
 
-                var request = new HttpRequestMessage(HttpMethod.Get,
-                "http://coverartarchive.org" + "/release-group/" + album.Id);
-
-                HttpResponseMessage response = await Client.SendAsync(request);
-
+               
                 if (response.IsSuccessStatusCode)
                 {
                     CoverArtModel coverArtData = await response.Content.ReadFromJsonAsync<CoverArtModel>();
